@@ -1,4 +1,4 @@
 FILO
 ====
 
-A lightweight, simple, secure file sharer
+A lightweight, simple, and secure file sharer
