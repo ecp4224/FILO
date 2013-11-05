@@ -14,6 +14,8 @@
     You should have received a copy of the GNU General Public License
     along with FILO.  If not, see <http://www.gnu.org/licenses/>. 
 */
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -80,19 +82,25 @@ namespace FILO
 
         private void foldersItem_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
+            var item = e.NewValue as TreeViewItem;
+            if (item == null || item.Tag == null)
+                return;
+            SendButton.IsEnabled = File.Exists(item.Tag as string);
         }
 
         private object dummyNode = null;
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            SendButton.IsEnabled = false;
+            IdTextBox.Text = "Enter Id or IP";
             IdBox.Text = "Please Wait..";
-            IdBox.ToolTip = idHelp;
+            IdBox.ToolTip = _idHelp;
             new Thread(GetId).Start();
             foreach (var item in Directory.GetLogicalDrives().Select(s => new TreeViewItem {Header = s, Tag = s, FontWeight = FontWeights.Normal}))
             {
                 item.Items.Add(dummyNode);
                 item.Expanded += item_Expanded;
-                foldersItem.Items.Add(item);
+                FoldersItem.Items.Add(item);
             }
         }
 
@@ -156,26 +164,23 @@ namespace FILO
             { }
         }
 
-        private void Button_Click_2(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private void tbControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            if (String.IsNullOrWhiteSpace(IdTextBox.Text))
+                IdTextBox.Text = "Enter Id or IP";
         }
-        ToolTip idHelp = new ToolTip { Content = "Your personal ID hides your IP from other users by masking it.\n Give this ID to the person recieving your file so they can connect." };
-        private ToolTip idCopy = new ToolTip {Content = "Your personal ID has been copied to your clipboard!"};
+
+        private readonly ToolTip _idHelp = new ToolTip { Content = "Your personal ID hides your IP from other users by masking it.\n Give this ID to the person recieving your file so they can connect." };
+        private readonly ToolTip _idCopy = new ToolTip {Content = "Your personal ID has been copied to your clipboard!"};
         private void IdBox_OnMouseEnter(object sender, MouseEventArgs e)
         {
-            idHelp.IsOpen = true;
+            _idHelp.IsOpen = true;
         }
 
         private void IdBox_OnMouseLeave(object sender, MouseEventArgs e)
         {
-            idHelp.IsOpen = false;
-            idCopy.IsOpen = false;
+            _idHelp.IsOpen = false;
+            _idCopy.IsOpen = false;
         }
 
         private void IdBox_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -183,8 +188,36 @@ namespace FILO
             if (IdBox.Text == "Please Wait.." || IdBox.Text == "Failed")
                 return;
             Clipboard.SetText(IdBox.Text);
-            idCopy.IsOpen = true;
-            idHelp.IsOpen = false;
+            _idCopy.IsOpen = true;
+            _idHelp.IsOpen = false;
+        }
+
+        private void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void RecieveButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (IdTextBox.Text.Length > 15)
+            {
+                IdTextBox.Text = IdTextBox.Text.Substring(0, 15);
+                IdTextBox.SelectionStart = 15;
+                IdTextBox.SelectionLength = 0;
+            }
+
+            RecieveButton.IsEnabled = IdTextBox.Text.Length > 0 || IdTextBox.Text == "Enter Id or IP";
+        }
+
+        private void IdTextBox_OnGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (IdTextBox.Text == "Enter Id or IP")
+                IdTextBox.Text = "";
         }
     }
 }
