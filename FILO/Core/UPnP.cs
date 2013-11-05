@@ -1,18 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿/*
+    This file is part of FILO.
+
+    FILO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    FILO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with FILO.  If not, see <http://www.gnu.org/licenses/>.
+ */
+using System;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
-using System.Windows;
 using System.Xml;
 using System.IO;
-using System.Diagnostics;
 
-//This upnp class comes from http://www.codeproject.com/Articles/27992/NAT-Traversal-with-UPnP-in-C, Modified for use with FileShare
-
+//This upnp class came from MCForge, the orginal author was headdetect
+//This upnp class comes from http://www.codeproject.com/Articles/27992/NAT-Traversal-with-UPnP-in-C, Modified for use with FILO
 namespace FILO.Core
 {
 
