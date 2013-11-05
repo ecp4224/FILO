@@ -1,5 +1,5 @@
 #FILO
-A lightweight, simple, and sexy file sharer
+A simple, lightweight, and sexy file sharer
 
 ![Screencap](http://i.imgur.com/0ptK9IJ.png)
 
