@@ -51,6 +51,22 @@ namespace FILO.Core
         public event PortFowardFailed OnPortFowardFailed = null;
 
         public ConnectionType ConnectionType { get; private set; }
+
+        public bool IsPrepared
+        {
+            get
+            {
+                return _prepared;
+            }
+        }
+
+        public bool IsConnected
+        {
+            get
+            {
+                return _connected && _socket.Connected;
+            }
+        }
         public String Ip
         {
             get {
@@ -94,15 +110,20 @@ namespace FILO.Core
 
             if (ConnectionType == ConnectionType.Reciever)
             {
-                new Thread(_asyncRecievePrepare).Start();
+                _asyncRecievePrepare();
             }
             else
             {
-                _listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp); 
-                new Thread(_asyncSendPrepare).Start();
+                _listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _asyncSendPrepare();
             }
 
             _prepared = true;
+        }
+
+        public void AsyncPrepareConnection()
+        {
+            new Thread(PrepareConnection).Start();
         }
 
         public void SendFile(String filePath)

@@ -35,6 +35,15 @@ namespace FILO
     public partial class MainWindow
     {
         private delegate void UpdateId(string id);
+
+        private delegate void UpdateButton(Button b, string content);
+
+        private delegate void UpdateControlState(Control b, bool value);
+
+        private delegate void MoveControl(Control b, int x, int y);
+  
+        private Connection connection;
+        private bool sending;
         public MainWindow()
         {
             InitializeComponent();
@@ -132,6 +141,36 @@ namespace FILO
             IdBox.Text = id;
         }
 
+        private void ChangeButtonContent(Button b, string id)
+        {
+            if (!b.Dispatcher.CheckAccess())
+            {
+                b.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new UpdateButton(ChangeButtonContent), b, id);
+                return;
+            }
+            b.Content = id;
+        }
+
+        private void SetEnabled(Control b, bool value)
+        {
+            if (!b.Dispatcher.CheckAccess())
+            {
+                b.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new UpdateControlState(SetEnabled), b, value);
+                return;
+            }
+            b.IsEnabled = value;
+        }
+
+        private void SetVisible(Control b, bool value)
+        {
+            if (!b.Dispatcher.CheckAccess())
+            {
+                b.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new UpdateControlState(SetVisible), b, value);
+                return;
+            }
+            b.Visibility = value ? Visibility.Visible : Visibility.Hidden;
+        }
+
         void item_Expanded(object sender, RoutedEventArgs e)
         {
             var item = (TreeViewItem)sender;
@@ -199,6 +238,104 @@ namespace FILO
 
         private void RecieveButton_Click(object sender, RoutedEventArgs e)
         {
+            RecieveButton.IsEnabled = false;
+            RecieveButton.Content = "Preparing";
+            string ip;
+            string id = IdTextBox.Text;
+            IdTextBox.IsEnabled = false;
+            if (!id.Contains("."))
+            {
+                int dots = 0;
+                var timer = new Timer(delegate
+                {
+                    dots++;
+                    if (dots > 4)
+                        dots = 0;
+                    string s = "Preparing";
+                    for (int i = 0; i < dots; i++)
+                    {
+                        s += ".";
+                    }
+
+                    ChangeButtonContent(RecieveButton, s);
+                    
+                }, null, 0, 500);
+                new Thread(new ThreadStart(delegate
+                {
+                    Thread.Sleep(1500);
+                    using (var web = new WebClient())
+                    {
+                        ip =
+                            web.DownloadString("http://www.hypereddie.com/utils/filo.php?action=get&id=" +
+                                              id);
+                    }
+                    timer.Dispose();
+                    if (ip == "No ID found..")
+                    {
+                        SetEnabled(RecieveButton, true);
+                        SetEnabled(IdTextBox, true);
+                        ChangeButtonContent(RecieveButton, "Connect and Recieve");
+                        MessageBox.Show("The personal ID supplied could not be resolved!", "Error resolving ID");
+                        return;
+                    }
+                    PrepareRecieve(ip);
+                })).Start();
+            }
+            else
+            {
+                ip = id;
+                new Thread(() => PrepareRecieve(ip)).Start();
+            }
+        }
+
+        private void PrepareRecieve(string ip)
+        {
+            SetEnabled(TbControl, false);
+            ChangeButtonContent(RecieveButton, "Connecting");
+            connection = new Connection(ConnectionType.Reciever, ip);
+            int dots = 0;
+            var timer = new Timer(delegate
+            {
+                dots++;
+                if (dots > 4)
+                    dots = 0;
+                string s = "Connecting";
+                for (int i = 0; i < dots; i++)
+                {
+                    s += ".";
+                }
+
+                ChangeButtonContent(RecieveButton, s);
+
+            }, null, 0, 500);
+            try
+            {
+                connection.PrepareConnection();
+                if (!connection.IsPrepared)
+                {
+                    MessageBox.Show("Could make a connection!", "Error connecting..");
+                    ChangeButtonContent(RecieveButton, "Connect and Recieve");
+                    SetEnabled(RecieveButton, true);
+                    SetEnabled(IdTextBox, true);
+                    SetEnabled(TbControl, true);
+                    timer.Dispose();
+                    return;
+                }
+            }
+            catch
+            {
+                MessageBox.Show("An error occured while attempting to connect!", "Error connecting..");
+                ChangeButtonContent(RecieveButton, "Connect and Recieve");
+                SetEnabled(RecieveButton, true);
+                SetEnabled(IdTextBox, true);
+                SetEnabled(TbControl, true);
+                timer.Dispose();
+                return;
+            }
+
+            SetVisible(RecieveButton, false);
+            SetVisible(IdTextBox, false);
+
 
         }
 
