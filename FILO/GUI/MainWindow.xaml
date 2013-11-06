@@ -22,16 +22,15 @@
         x:Class="FILO.MainWindow"
         Title="FILO" Height="551" Width="828"  Loaded="Window_Loaded" ResizeMode="CanMinimize"  Background="#eff4ff">
     <Grid>
-
         <TabControl HorizontalAlignment="Stretch" Name="TbControl" VerticalAlignment="Stretch" Background="#eff4ff" SelectionChanged="tbControl_SelectionChanged">
             <TabItem Header="Send a File
                      " Name="SendItem" Margin="0,0,112,0">
                 <Grid>
-                    <GroupBox Header="Choose a file" Margin="10,-3,10,66"/>
-                    <Label Content="Personal ID:" HorizontalAlignment="Left" Height="37" Margin="10,417,0,0" VerticalAlignment="Top" FontFamily="Oxygen" FontSize="13" Width="81"/>
+                    <GroupBox Name="Group"  Header="Choose a file" Margin="10,-3,10,66"/>
+                    <Label Name="lbl1" Content="Personal ID:" HorizontalAlignment="Left" Height="37" Margin="10,417,0,0" VerticalAlignment="Top" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="13" Width="81"/>
 
                     <TextBox Name="IdBox" HorizontalAlignment="Left" Height="22" Margin="91,426,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120" IsReadOnly="True" MouseEnter="IdBox_OnMouseEnter" MouseLeave="IdBox_OnMouseLeave" MouseDoubleClick="IdBox_OnMouseDoubleClick"/>
-                    <Button Name="SendButton" Margin="325,408,333,0" VerticalAlignment="Top" RenderTransformOrigin="-1.173,0.65" Height="57" FontFamily="Oxygen" FontSize="24" HorizontalContentAlignment="Center" IsDefault="True" Content="Send" Foreground="White" Click="SendButton_Click" FontWeight="Bold">
+                    <Button Name="SendButton" Margin="325,408,333,0" VerticalAlignment="Top" RenderTransformOrigin="-1.173,0.65" Height="57" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="24" HorizontalContentAlignment="Center" IsDefault="True" Content="Send" Foreground="White" Click="SendButton_Click" FontWeight="Bold">
                         <Button.Resources>
                             <Style TargetType="{x:Type Button}">
                                 <Setter Property="SnapsToDevicePixels" Value="true"/>
@@ -42,16 +41,16 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Border 
-           x:Name="Border"  
-           CornerRadius="5" 
-           BorderThickness="1"
-           Background="#603cba"
-           BorderBrush="#603cba">
+                                                Name="Border"  
+                                                CornerRadius="5" 
+                                                BorderThickness="1"
+                                                Background="#603cba"
+                                                BorderBrush="#603cba">
                                                 <ContentPresenter 
-             Margin="2"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center"
-             RecognizesAccessKey="True"/>
+                                                    Margin="2"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    RecognizesAccessKey="True"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsKeyboardFocused" Value="true">
@@ -80,8 +79,8 @@
                         </Button.Resources>
                     </Button>
                     <TreeView x:Name="FoldersItem" SelectedItemChanged="foldersItem_SelectedItemChanged" Width="Auto" Background="#FFFFFFFF" BorderBrush="#eff4ff" Foreground="#FFFFFFFF" Margin="21,19,26,77"
-			VirtualizingPanel.IsVirtualizing="True"
-			VirtualizingPanel.VirtualizationMode="Recycling">
+			        VirtualizingPanel.IsVirtualizing="True"
+			        VirtualizingPanel.VirtualizationMode="Recycling">
 
                         <TreeView.Resources>
                             <Style TargetType="{x:Type TreeViewItem}">
@@ -89,9 +88,8 @@
                                     <Setter.Value>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
-                                                <Image x:Name="img"  Width="20" Height="20" Stretch="Fill" 
-										Source="{Binding Tag, Converter={x:Static pew:HeaderToImageConverter.Instance}, RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}, Mode=FindAncestor}}"       
-                                       />
+                                                <Image Name="img"  Width="20" Height="20" Stretch="Fill" 
+										        Source="{Binding Tag, Converter={x:Static pew:HeaderToImageConverter.Instance}, RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}, Mode=FindAncestor}}" />
                                                 <TextBlock Text="{Binding}" Margin="5,0" />
                                             </StackPanel>
                                         </DataTemplate>
@@ -100,12 +98,7 @@
                             </Style>
                         </TreeView.Resources>
                     </TreeView>
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Recieve a File" Name="RecieveItem" Margin="-109,0,85,0">
-                <Grid>
-                    <Button Name="RecieveButton" Margin="278,370,278,0" VerticalAlignment="Top" RenderTransformOrigin="-1.173,0.65" Height="60" FontFamily="Oxygen" FontSize="24" HorizontalContentAlignment="Center" IsDefault="True" Content="Connect and Recieve" Foreground="White" Click="RecieveButton_Click" FontStretch="ExtraExpanded" FontWeight="Bold">
+                    <Button Name="SendCancelButton" Margin="639,410,10,0" VerticalAlignment="Top" RenderTransformOrigin="-1.173,0.65" Height="54" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="24" HorizontalContentAlignment="Center" IsDefault="True" Content="Cancel" Foreground="White" Click="SendCancelButton_OnClick" FontStretch="ExtraExpanded" FontWeight="Bold">
                         <Button.Resources>
                             <Style TargetType="{x:Type Button}">
                                 <Setter Property="SnapsToDevicePixels" Value="true"/>
@@ -116,16 +109,119 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type Button}">
                                             <Border 
-           x:Name="Border"  
-           CornerRadius="5" 
-           BorderThickness="1"
-           Background="#603cba"
-           BorderBrush="#603cba">
+                                                Name="Border"  
+                                                CornerRadius="5" 
+                                                BorderThickness="1"
+                                                Background="#603cba"
+                                                BorderBrush="#603cba">
                                                 <ContentPresenter 
-             Margin="2"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center"
-             RecognizesAccessKey="True"/>
+                                                    Margin="2"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    RecognizesAccessKey="True"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#202020" />
+                                                </Trigger>
+                                                <Trigger Property="IsDefaulted" Value="true">
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#202020" />
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="true">
+                                                    <Setter TargetName="Border" Property="Background" Value="#FF4C2F93" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="true">
+                                                    <Setter TargetName="Border" Property="Background" Value="#FF391D7E" />
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#FF391D7E" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="false">
+                                                    <Setter TargetName="Border" Property="Background" Value="#EEEEEE" />
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#AAAAAA" />
+                                                    <Setter Property="Foreground" Value="#1d1d1d"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    <ProgressBar Name="SendProgressBar" Margin="28,166,32,241"/>
+                    <Label Name="SendStatusLabel" Content="Waiting for user.." HorizontalAlignment="Left" Margin="28,115,0,0" VerticalAlignment="Top" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="23" Width="762" HorizontalContentAlignment="Center"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Recieve a File" Name="RecieveItem" Margin="-109,0,85,0">
+                <Grid>
+                    <Button Name="RecieveButton" Margin="278,370,278,0" VerticalAlignment="Top" RenderTransformOrigin="-1.173,0.65" Height="60" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="24" HorizontalContentAlignment="Center" IsDefault="True" Content="Connect and Recieve" Foreground="White" Click="RecieveButton_Click" FontStretch="ExtraExpanded" FontWeight="Bold">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="SnapsToDevicePixels" Value="true"/>
+                                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                                <Setter Property="MinHeight" Value="23"/>
+                                <Setter Property="MinWidth" Value="75"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border 
+                                                Name="Border"  
+                                                CornerRadius="5" 
+                                                BorderThickness="1"
+                                                Background="#603cba"
+                                                BorderBrush="#603cba">
+                                                <ContentPresenter 
+                                                    Margin="2"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    RecognizesAccessKey="True"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#202020" />
+                                                </Trigger>
+                                                <Trigger Property="IsDefaulted" Value="true">
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#202020" />
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="true">
+                                                    <Setter TargetName="Border" Property="Background" Value="#FF4C2F93" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="true">
+                                                    <Setter TargetName="Border" Property="Background" Value="#FF391D7E" />
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#FF391D7E" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="false">
+                                                    <Setter TargetName="Border" Property="Background" Value="#EEEEEE" />
+                                                    <Setter TargetName="Border" Property="BorderBrush" Value="#AAAAAA" />
+                                                    <Setter Property="Foreground" Value="#1d1d1d"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    <Button Name="CancelButton" Margin="639,410,10,0" VerticalAlignment="Top" RenderTransformOrigin="-1.173,0.65" Height="54" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="24" HorizontalContentAlignment="Center" IsDefault="True" Content="Cancel" Foreground="White" Click="CancelButton_Click" FontStretch="ExtraExpanded" FontWeight="Bold">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="SnapsToDevicePixels" Value="true"/>
+                                <Setter Property="OverridesDefaultStyle" Value="true"/>
+                                <Setter Property="MinHeight" Value="23"/>
+                                <Setter Property="MinWidth" Value="75"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border 
+                                                Name="Border"  
+                                                CornerRadius="5" 
+                                                BorderThickness="1"
+                                                Background="#603cba"
+                                                BorderBrush="#603cba">
+                                                <ContentPresenter 
+                                                    Margin="2"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    RecognizesAccessKey="True"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsKeyboardFocused" Value="true">
@@ -154,9 +250,10 @@
                         </Button.Resources>
                     </Button>
                     <TextBox Name="IdTextBox" TextWrapping="Wrap" Text="TextBox" Margin="153,145,153,241" FontSize="44" TextChanged="TextBox_TextChanged" HorizontalContentAlignment="Center" GotKeyboardFocus="IdTextBox_OnGotKeyboardFocus"/>
+                    <ProgressBar Name="ProgressBar" Margin="28,166,32,241"/>
+                    <Label Name="StatusLabel" Content="Waiting for user.." HorizontalAlignment="Left" Margin="28,115,0,0" VerticalAlignment="Top" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="23" Width="762" HorizontalContentAlignment="Center"/>
                 </Grid>
             </TabItem>
-
         </TabControl>
     </Grid>
 </metro:Window>

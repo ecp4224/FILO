@@ -69,8 +69,12 @@
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
+    <Reference Include="PresentationCore">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -123,19 +127,22 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="NATUPNPLib">
-      <Guid>{1C565858-F302-471E-B409-F180AA4ABEC6}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="GUI\Images\diskdrive.png" />
     <Resource Include="GUI\Images\folder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Fonts\Oxygen\Oxygen.otf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fonts\Oxygen\Oxygen-Bold.otf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fonts\Oxygen\Oxygen-BoldItalic.otf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fonts\Oxygen\Oxygen-Italic.otf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

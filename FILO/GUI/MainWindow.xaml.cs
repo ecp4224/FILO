@@ -25,6 +25,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using FILO.Core;
+using FILO.Core.Log;
 using Path = System.IO.Path;
 
 namespace FILO
@@ -37,6 +38,8 @@ namespace FILO
         private delegate void UpdateId(string id);
 
         private delegate void UpdateButton(Button b, string content);
+
+        private delegate void UpdateLabel(Label l, string content);
 
         private delegate void UpdateControlState(Control b, bool value);
 
@@ -100,6 +103,12 @@ namespace FILO
         private object dummyNode = null;
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            ProgressBar.Visibility = Visibility.Hidden;
+            StatusLabel.Visibility = Visibility.Hidden;
+            CancelButton.Visibility = Visibility.Hidden;
+            SendProgressBar.Visibility = Visibility.Hidden;
+            SendStatusLabel.Visibility = Visibility.Hidden;
+            SendCancelButton.Visibility = Visibility.Hidden;
             SendButton.IsEnabled = false;
             IdTextBox.Text = "Enter Id or IP";
             IdBox.Text = "Please Wait..";
@@ -159,6 +168,17 @@ namespace FILO
                 return;
             }
             b.IsEnabled = value;
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void SetLabelContent(Label l, string content)
+        {
+            if (!l.Dispatcher.CheckAccess())
+            {
+                l.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new UpdateLabel(SetLabelContent), l, content);
+                return;
+            }
+            l.Content = content;
         }
 
         private void SetVisible(Control b, bool value)
@@ -233,13 +253,87 @@ namespace FILO
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
         {
+            var item = FoldersItem.SelectedItem as TreeViewItem;
+            if (item == null)
+                return;
+            string filePath = item.Tag.ToString();
+            SendButton.IsEnabled = false;
+            SendCancelButton.IsEnabled = true;
+            SendButton.Content = "Preparing";
+            TbControl.IsEnabled = false;
+            FoldersItem.IsEnabled = false;
+            new Thread(new ThreadStart(delegate
+            {
+                int dots = 0;
+                var timer = new Timer(delegate
+                {
+                    dots++;
+                    if (dots > 4)
+                        dots = 0;
+                    string s = "Preparing";
+                    for (int i = 0; i < dots; i++)
+                    {
+                        s += ".";
+                    }
 
+                    ChangeButtonContent(SendButton, s);
+
+                }, null, 0, 500);
+
+                var c = new Connection(ConnectionType.Sender);
+                c.PrepareConnection();
+                c.OnConnectionMade += connection1 => new Thread(new ThreadStart(delegate
+                {
+                    connection1.SendFile(filePath);
+                    Logger.Info("Done!");
+                    ChangeButtonContent(SendCancelButton, "Finish");
+                    SetEnabled(SendCancelButton, true);
+                    SetEnabled(SendButton, true);
+                    done = true;
+                    timer.Dispose();
+                })).Start();
+                timer.Dispose();
+                SetVisibilitySendTabControls(false);
+                SetEnabled(SendCancelButton, true);
+                SetEnabled(SendButton, true);
+                timer = new Timer(delegate
+                {
+                    SetLabelContent(SendStatusLabel, Logger.LastMessage);
+                }, null, 0, 20);
+            })).Start();
+
+        }
+
+        private void SetVisibilitySendTabControls(bool value)
+        {
+            SetVisible(SendButton, value);
+            SetVisible(FoldersItem, value);
+            SetVisible(Group, value);
+            SetVisible(lbl1, value);
+            SetVisible(IdBox, value);
+
+
+            SetVisible(SendProgressBar, !value);
+            SetVisible(SendStatusLabel, !value);
+            SetVisible(SendCancelButton, !value);
+        }
+
+        private void SetVisibilityRecieveTabControl(bool value)
+        {
+            SetVisible(RecieveButton, value);
+            SetVisible(IdTextBox, value);
+
+
+            SetVisible(ProgressBar, !value);
+            SetVisible(StatusLabel, !value);
+            SetVisible(CancelButton, !value);
         }
 
         private void RecieveButton_Click(object sender, RoutedEventArgs e)
         {
             RecieveButton.IsEnabled = false;
             RecieveButton.Content = "Preparing";
+            CancelButton.IsEnabled = true;
             string ip;
             string id = IdTextBox.Text;
             IdTextBox.IsEnabled = false;
@@ -288,6 +382,7 @@ namespace FILO
             }
         }
 
+        private bool done;
         private void PrepareRecieve(string ip)
         {
             SetEnabled(TbControl, false);
@@ -311,9 +406,9 @@ namespace FILO
             try
             {
                 connection.PrepareConnection();
-                if (!connection.IsPrepared)
+                if (!connection.IsConnected)
                 {
-                    MessageBox.Show("Could make a connection!", "Error connecting..");
+                    MessageBox.Show("Could not make a connection!", "Error connecting..");
                     ChangeButtonContent(RecieveButton, "Connect and Recieve");
                     SetEnabled(RecieveButton, true);
                     SetEnabled(IdTextBox, true);
@@ -333,10 +428,22 @@ namespace FILO
                 return;
             }
 
-            SetVisible(RecieveButton, false);
-            SetVisible(IdTextBox, false);
+            SetVisibilityRecieveTabControl(false);
+            SetEnabled(CancelButton, true);
+            SetEnabled(RecieveButton, true);
+            timer = new Timer(delegate
+            {
+                SetLabelContent(StatusLabel, Logger.LastMessage);
+            }, null, 0, 20);
 
+            connection.RecieveFile("testing.txt");
 
+            Logger.Info("Done!");
+            ChangeButtonContent(CancelButton, "Finish");
+            SetEnabled(CancelButton, true);
+            SetEnabled(RecieveButton, true);
+            done = true;
+            timer.Dispose();
         }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -355,6 +462,24 @@ namespace FILO
         {
             if (IdTextBox.Text == "Enter Id or IP")
                 IdTextBox.Text = "";
+        }
+
+        private void SendCancelButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (done)
+            {
+                SetVisibilitySendTabControls(true);
+                TbControl.IsEnabled = true;
+            }
+        }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (done)
+            {
+                SetVisibilityRecieveTabControl(true);
+                TbControl.IsEnabled = true;
+            }
         }
     }
 }

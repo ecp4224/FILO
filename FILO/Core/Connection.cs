@@ -164,13 +164,13 @@ namespace FILO.Core
             
             _listenSocket.Close();
             _listenSocket.Dispose();
-            _socket.Disconnect(true);
             _socket.Shutdown(SocketShutdown.Both);
+            _socket.Disconnect(false);
             _socket.Close();
             _socket.Dispose();
         }
 
-        public void RecieveFile(String savePath)
+        public void RecieveFile(string savePath)
         {
             if (!_connected)
                 throw new InvalidOperationException("This Connection object is not connected!");
@@ -248,7 +248,7 @@ namespace FILO.Core
             catch (Exception e)
             {
                 _recieving = false;
-                //TODO Show error
+                Logger.Error(e);
             }
         }
 
@@ -293,43 +293,8 @@ namespace FILO.Core
             {
                 _listenSocket.Bind(ipLocal);
                 Logger.Debug("Bound to port " + DefaultPort);
-                _listenSocket.Listen(2);
-                _listenSocket.BeginAccept(delegate(IAsyncResult asyn)
-                {
-                    try
-                    {
-                        Logger.Info("Connection recieved");
-                        if (_socket != null || testingPort)
-                        {
-                            Logger.Info("Dummy connection, disconnecting..");
-                            Socket temp = _listenSocket.EndAccept(asyn);
-                            temp.Shutdown(SocketShutdown.Both);
-                            temp.Disconnect(false);
-                            temp.Close();
-                            temp.Dispose();
-                            return;
-                        }
-                        Logger.Info("Client confirmed");
-                        _connected = true;
-
-                        if (OnConnectionMade != null)
-                        {
-                            Logger.Debug("Invoking OnConnectionMade event");
-                            OnConnectionMade(this);
-                        }
-
-                        Logger.Debug("Setting up client socket");
-                        _socket = _listenSocket.EndAccept(asyn); //Todo this might break things..
-                        _socket.SendTimeout = DefaultTimeout;
-                        _socket.ReceiveTimeout = DefaultTimeout;
-                        _socket.ReceiveBufferSize = Buffer;
-                        Logger.Debug("Waiting for user instruction");
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error(e);
-                    }
-                }, null);
+                _listenSocket.Listen(1);
+                _listenSocket.BeginAccept(connectClient, null);
             }
             catch (Exception e)
             {
@@ -346,8 +311,50 @@ namespace FILO.Core
                 return;
             }
             Logger.Debug("Port opened!");
-            Thread.Sleep(500); //Safety net for threading things..
-            testingPort = false;
+        }
+
+        private void connectClient(IAsyncResult asyn)
+        {
+            try
+            {
+                Logger.Info("Connection recieved");
+                if (_socket != null || testingPort)
+                {
+                    Logger.Debug("Dummy connection, disconnecting..");
+                    if (testingPort)
+                    {
+                        Logger.Info("Connection ready! Waiting for client..");
+                        testingPort = false;
+                    }
+                    Socket temp = _listenSocket.EndAccept(asyn);
+                    //temp.Shutdown(SocketShutdown.Send);
+                    temp.Disconnect(false);
+                    temp.Close();
+                    temp.Dispose();
+                    _listenSocket.Listen(1);
+                    _listenSocket.BeginAccept(connectClient, null);
+                    return;
+                }
+                Logger.Info("Client connected");
+                _connected = true;
+
+
+                Logger.Debug("Setting up client socket");
+                _socket = _listenSocket.EndAccept(asyn); //Todo this might break things..
+                _socket.SendTimeout = DefaultTimeout;
+                _socket.ReceiveTimeout = DefaultTimeout;
+                _socket.ReceiveBufferSize = Buffer;
+
+                if (OnConnectionMade != null)
+                {
+                    Logger.Debug("Invoking OnConnectionMade event");
+                    OnConnectionMade(this);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         private bool CheckPort()

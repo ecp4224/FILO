@@ -34,9 +34,10 @@ namespace FILO.Core.Utils
         private static readonly BitmapImage DefaultImage = Bitmap2BitmapImage(SystemIcons.WinLogo.ToBitmap());
         private static readonly BitmapImage DriveImage;
         private static readonly BitmapImage FolderImage;
-
+        public static HeaderToImageConverter Instance;
         static HeaderToImageConverter()
         {
+            Instance = new HeaderToImageConverter();
             Uri uri;
             try
             {
@@ -57,7 +58,6 @@ namespace FILO.Core.Utils
                 FolderImage = DefaultImage;
             }
         }
-        public static HeaderToImageConverter Instance = new HeaderToImageConverter();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
