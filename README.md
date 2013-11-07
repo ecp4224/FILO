@@ -1,4 +1,5 @@
-![Logo](https://raw.github.com/hypereddie10/FILO/master/FILO/GUI/Images/logo.png)
+![Logo](http://www.hypereddie.com/images/thumb.png)
+
 A simple, lightweight, and sexy file sharer
 
 ##What is FILO?
