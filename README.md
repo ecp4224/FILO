@@ -1,7 +1,5 @@
-#FILO
+![Logo](https://raw.github.com/hypereddie10/FILO/master/FILO/GUI/Images/logo.png)
 A simple, lightweight, and sexy file sharer
-
-![Screencap](http://i.imgur.com/0ptK9IJ.png)
 
 ##What is FILO?
 FILO is a simple and lightweight file sender. 
