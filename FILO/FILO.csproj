@@ -33,20 +33,28 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AurelienRibon.Ui.SyntaxHighlightBox">
+    <Reference Include="AurelienRibon.Ui.SyntaxHighlightBox, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\AurelienRibon.Ui.SyntaxHighlightBox.dll</HintPath>
     </Reference>
-    <Reference Include="Elysium">
+    <Reference Include="Elysium, Version=2.0.976.4, Culture=neutral, PublicKeyToken=afa220db249e5b15, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Elysium.dll</HintPath>
     </Reference>
-    <Reference Include="Elysium.Design.10.0">
+    <Reference Include="Elysium.Design.10.0, Version=2.0.121.4, Culture=neutral, PublicKeyToken=afa220db249e5b15, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Elysium.Design.10.0.dll</HintPath>
     </Reference>
-    <Reference Include="Elysium.Design.11.0">
+    <Reference Include="Elysium.Design.11.0, Version=2.0.121.4, Culture=neutral, PublicKeyToken=afa220db249e5b15, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Elysium.Design.11.0.dll</HintPath>
     </Reference>
-    <Reference Include="Elysium.Notifications">
+    <Reference Include="Elysium.Notifications, Version=2.0.62.4, Culture=neutral, PublicKeyToken=afa220db249e5b15, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Elysium.Notifications.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Expression.Drawing, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -54,8 +62,12 @@
       <HintPath>Libs\Microsoft.Expression.Drawing.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Windows.Design.Extensibility, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=x86" />
-    <Reference Include="Microsoft.Windows.Shell">
+    <Reference Include="Microsoft.Windows.Shell, Version=3.5.41019.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Microsoft.Windows.Shell.dll</HintPath>
+    </Reference>
+    <Reference Include="Ookii.Dialogs.Wpf">
+      <HintPath>Libs\Ookii.Dialogs.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -143,6 +155,8 @@
     <Content Include="Fonts\Oxygen\Oxygen-Italic.otf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="icon.ico" />
+    <Resource Include="GUI\Images\icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

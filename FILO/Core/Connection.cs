@@ -16,6 +16,7 @@
  */
 using System;
 using System.Collections.Concurrent;
+using System.Drawing.Text;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -40,6 +41,7 @@ namespace FILO.Core
         private bool _recieving;
         private int _pos;
         private long _posLength;
+        private int _bufferLength;
         private bool _completed;
         private readonly ConcurrentQueue<byte[]> _data = new ConcurrentQueue<byte[]>(); 
 
@@ -89,7 +91,7 @@ namespace FILO.Core
             }
         }
 
-
+        public volatile int Progress;
         public Connection(ConnectionType connectionType) : this(connectionType, "127.0.0.1", DefaultBuffer){}
 
         public Connection(ConnectionType connectionType, String ip) : this(connectionType, ip, DefaultBuffer){}
@@ -138,7 +140,14 @@ namespace FILO.Core
                 throw new InvalidOperationException("This Connection object was made to recieve, not send!");
 
             _sending = true;
-
+            _socket.Send(new byte[] {10}); //Tell client to prepare itself for next packet
+            string filename = Path.GetFileName(filePath);
+            if (filename == null)
+                throw new InvalidOperationException("Error getting filename for file \"" + filePath + "\"");
+            byte[] bytes = new byte[filename.Length * sizeof(char)];
+            System.Buffer.BlockCopy(filename.ToCharArray(), 0, bytes, 0, bytes.Length);
+            _socket.Send(BitConverter.GetBytes(bytes.Length));
+            _socket.Send(bytes);
             using (var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, System.IO.FileShare.None))
             {
                 var t = new Thread(new ThreadStart(_sendBufferedBytes));
@@ -150,18 +159,20 @@ namespace FILO.Core
                     if (!_sending)
                         break;
                     var dataBuffer = new byte[Buffer];
-                    var count = fs.Read(dataBuffer, _pos, Buffer);
+                    var count = fs.Read(dataBuffer, 0, Buffer);
                     _pos += count;
                     if (count == 0)
                         break;
                     _data.Enqueue(dataBuffer);
+                    _bufferLength++;
+                    Progress = (int)(((double)((double)_bufferCount / (double)_bufferLength) * 100.0) + ((double)((double)_pos / (double)_posLength) * 100.0));
                 }
                 _completed = true;
                 t.Join();
             }
 
             _socket.Send(new byte[] {255, 255, 255, 255}, 0, 4, SocketFlags.None); //Terminate command
-            
+            Progress = 200;
             _listenSocket.Close();
             _listenSocket.Dispose();
             _socket.Shutdown(SocketShutdown.Both);
@@ -182,20 +193,49 @@ namespace FILO.Core
             _recieving = true;
 
             Thread.Sleep(500);
-            var thread = new Thread(new ThreadStart(() => _saveBufferedBytes(savePath)));
-            thread.Start();
+            Thread thread = null;
+            bool hasFile = false;
+            bool prepare = false;
+            string fileName;
             try
             {
                 while (true)
                 {
-                    var data = new byte[Buffer];
-                    int count = _socket.Receive(data, 0, Buffer, SocketFlags.None);
+                    var data = new byte[hasFile ? Buffer : prepare ? 4 : 1];
+                    int count = _socket.Receive(data, 0, data.Length, SocketFlags.None);
                     if (count == 0)
                         continue;
-                    if (data[0] == 255 && data[1] == 255 && data[2] == 255 && data[3] == 255 && data[4] == 0 &&
-                        data[5] == 0 && count == 4)
-                        break;
-                    _data.Enqueue(data);
+                    if (hasFile)
+                    {
+                        if (data[0] == 255 && data[1] == 255 && data[2] == 255 && data[3] == 255 && data[4] == 0 &&
+                            data[5] == 0 && count == 4)
+                            break;
+                        _data.Enqueue(data);
+                    }
+                    else
+                    {
+                        if (prepare && count > 0)
+                        {
+                            int size = BitConverter.ToInt32(data, 0);
+                            while (true)
+                            {
+                                data = new byte[size];
+                                count = _socket.Receive(data, 0, size, SocketFlags.None);
+                                if (count == 0)
+                                    continue;
+                                break;
+                            }
+                            char[] chars = new char[data.Length / sizeof(char)];
+                            System.Buffer.BlockCopy(data, 0, chars, 0, data.Length);
+                            fileName = new string(chars);
+                            hasFile = true;
+                            thread = new Thread(() => _saveBufferedBytes(savePath + "\\" + fileName));
+                            thread.Start();
+                        }
+                        if (count == 1 && data[0] == 10)
+                            prepare = true;
+                    }
+                    Thread.Sleep(10);
                 }
                 _recieving = false;
                 thread.Join();
@@ -203,10 +243,11 @@ namespace FILO.Core
             catch (IOException e)
             {
                 _recieving = false;
-                thread.Join();
+                if (thread != null) thread.Join();
             }
         }
 
+        private int _bufferCount;
         private void _saveBufferedBytes(string savePath)
         {
             try
@@ -224,6 +265,7 @@ namespace FILO.Core
                                 byte[] dataBytes;
                                 _data.TryDequeue(out dataBytes);
                                 fs.Write(dataBytes, 0, dataBytes.Length);
+                                _bufferCount++;
                             }
                             break;
                         }
@@ -232,6 +274,8 @@ namespace FILO.Core
                             byte[] dataBytes;
                             _data.TryDequeue(out dataBytes);
                             fs.Write(dataBytes, 0, dataBytes.Length);
+                            _bufferCount++;
+                            Progress = (int)(((double)((double)_bufferCount / (double)_bufferLength) * 100.0) + ((double)((double)_pos / (double)_posLength) * 100.0));
                         }
                         Thread.Sleep(10);
                     }
@@ -242,8 +286,10 @@ namespace FILO.Core
                         byte[] dataBytes;
                         _data.TryDequeue(out dataBytes);
                         fs.Write(dataBytes, 0, dataBytes.Length);
+                        _bufferCount++;
                     }
                 }
+                Progress = (int)(((double)((double)_bufferCount / (double)_bufferLength) * 100.0) + ((double)((double)_pos / (double)_posLength) * 100.0));
             }
             catch (Exception e)
             {
@@ -294,7 +340,7 @@ namespace FILO.Core
                 _listenSocket.Bind(ipLocal);
                 Logger.Debug("Bound to port " + DefaultPort);
                 _listenSocket.Listen(1);
-                _listenSocket.BeginAccept(connectClient, null);
+                _listenSocket.BeginAccept(ConnectClient, null);
             }
             catch (Exception e)
             {
@@ -313,12 +359,23 @@ namespace FILO.Core
             Logger.Debug("Port opened!");
         }
 
-        private void connectClient(IAsyncResult asyn)
+        private void ConnectClient(IAsyncResult asyn)
         {
             try
             {
                 Logger.Info("Connection recieved");
-                if (_socket != null || testingPort)
+                Socket temp = _listenSocket.EndAccept(asyn);
+                temp.ReceiveTimeout = 5000;
+                byte[] data = new byte[1];
+                int count = 0;
+                try
+                {
+                    count = temp.Receive(data, 0, 1, SocketFlags.None);
+                }
+                catch
+                {
+                }
+                if (count != 1 || data[0] != 6)
                 {
                     Logger.Debug("Dummy connection, disconnecting..");
                     if (testingPort)
@@ -326,13 +383,12 @@ namespace FILO.Core
                         Logger.Info("Connection ready! Waiting for client..");
                         testingPort = false;
                     }
-                    Socket temp = _listenSocket.EndAccept(asyn);
                     //temp.Shutdown(SocketShutdown.Send);
                     temp.Disconnect(false);
                     temp.Close();
                     temp.Dispose();
                     _listenSocket.Listen(1);
-                    _listenSocket.BeginAccept(connectClient, null);
+                    _listenSocket.BeginAccept(ConnectClient, null);
                     return;
                 }
                 Logger.Info("Client connected");
@@ -340,7 +396,7 @@ namespace FILO.Core
 
 
                 Logger.Debug("Setting up client socket");
-                _socket = _listenSocket.EndAccept(asyn); //Todo this might break things..
+                _socket = temp;
                 _socket.SendTimeout = DefaultTimeout;
                 _socket.ReceiveTimeout = DefaultTimeout;
                 _socket.ReceiveBufferSize = Buffer;
@@ -461,6 +517,8 @@ namespace FILO.Core
             }
 
             _connected = true;
+
+            _socket.Send(new byte[] {6}); //Tell server I'm a client
 
             if (OnConnectionMade != null)
             {

@@ -26,6 +26,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using FILO.Core;
 using FILO.Core.Log;
+using Ookii.Dialogs.Wpf;
 using Path = System.IO.Path;
 
 namespace FILO
@@ -44,6 +45,8 @@ namespace FILO
         private delegate void UpdateControlState(Control b, bool value);
 
         private delegate void MoveControl(Control b, int x, int y);
+
+        private delegate void UpdateProgress(ProgressBar b, double progress);
   
         private Connection connection;
         private bool sending;
@@ -148,6 +151,17 @@ namespace FILO
                 return;
             }
             IdBox.Text = id;
+        }
+
+        private void ChangeProgressBar(ProgressBar b, double value)
+        {
+            if (!b.Dispatcher.CheckAccess())
+            {
+                b.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                    new UpdateProgress(ChangeProgressBar), b, value);
+                return;
+            }
+            b.Value = value;
         }
 
         private void ChangeButtonContent(Button b, string id)
@@ -260,8 +274,9 @@ namespace FILO
             SendButton.IsEnabled = false;
             SendCancelButton.IsEnabled = true;
             SendButton.Content = "Preparing";
-            TbControl.IsEnabled = false;
             FoldersItem.IsEnabled = false;
+            RecieveItem.IsEnabled = false;
+            SendProgressBar.Maximum = 200;
             new Thread(new ThreadStart(delegate
             {
                 int dots = 0;
@@ -287,10 +302,14 @@ namespace FILO
                     connection1.SendFile(filePath);
                     Logger.Info("Done!");
                     ChangeButtonContent(SendCancelButton, "Finish");
+                    ChangeButtonContent(SendButton, "Send");
                     SetEnabled(SendCancelButton, true);
+                    SetEnabled(FoldersItem, true);
                     SetEnabled(SendButton, true);
+                    SetEnabled(RecieveItem, true);
                     done = true;
                     timer.Dispose();
+                    ChangeProgressBar(SendProgressBar, connection1.Progress);
                 })).Start();
                 timer.Dispose();
                 SetVisibilitySendTabControls(false);
@@ -298,6 +317,7 @@ namespace FILO
                 SetEnabled(SendButton, true);
                 timer = new Timer(delegate
                 {
+                    ChangeProgressBar(SendProgressBar, c.Progress);
                     SetLabelContent(SendStatusLabel, Logger.LastMessage);
                 }, null, 0, 20);
             })).Start();
@@ -331,6 +351,14 @@ namespace FILO
 
         private void RecieveButton_Click(object sender, RoutedEventArgs e)
         {
+            var dialog = new VistaFolderBrowserDialog();
+            dialog.Description = "Please select a folder to save the file.";
+            dialog.UseDescriptionForTitle = true;
+            var showDialog = dialog.ShowDialog(this);
+            bool val = showDialog != null && (bool)showDialog;
+            if (!val)
+                return;
+            string filePath = dialog.SelectedPath;
             RecieveButton.IsEnabled = false;
             RecieveButton.Content = "Preparing";
             CancelButton.IsEnabled = true;
@@ -372,20 +400,20 @@ namespace FILO
                         MessageBox.Show("The personal ID supplied could not be resolved!", "Error resolving ID");
                         return;
                     }
-                    PrepareRecieve(ip);
+                    PrepareRecieve(ip, filePath);
                 })).Start();
             }
             else
             {
                 ip = id;
-                new Thread(() => PrepareRecieve(ip)).Start();
+                new Thread(() => PrepareRecieve(ip, filePath)).Start();
             }
         }
 
         private bool done;
-        private void PrepareRecieve(string ip)
+        private void PrepareRecieve(string ip, string filePath)
         {
-            SetEnabled(TbControl, false);
+            SetEnabled(SendItem, false);
             ChangeButtonContent(RecieveButton, "Connecting");
             connection = new Connection(ConnectionType.Reciever, ip);
             int dots = 0;
@@ -412,7 +440,7 @@ namespace FILO
                     ChangeButtonContent(RecieveButton, "Connect and Recieve");
                     SetEnabled(RecieveButton, true);
                     SetEnabled(IdTextBox, true);
-                    SetEnabled(TbControl, true);
+                    SetEnabled(SendItem, true);
                     timer.Dispose();
                     return;
                 }
@@ -423,7 +451,7 @@ namespace FILO
                 ChangeButtonContent(RecieveButton, "Connect and Recieve");
                 SetEnabled(RecieveButton, true);
                 SetEnabled(IdTextBox, true);
-                SetEnabled(TbControl, true);
+                SetEnabled(SendItem, true);
                 timer.Dispose();
                 return;
             }
@@ -436,7 +464,7 @@ namespace FILO
                 SetLabelContent(StatusLabel, Logger.LastMessage);
             }, null, 0, 20);
 
-            connection.RecieveFile("testing.txt");
+            connection.RecieveFile(filePath);
 
             Logger.Info("Done!");
             ChangeButtonContent(CancelButton, "Finish");
@@ -469,7 +497,7 @@ namespace FILO
             if (done)
             {
                 SetVisibilitySendTabControls(true);
-                TbControl.IsEnabled = true;
+                SetEnabled(RecieveItem, true);
             }
         }
 
@@ -478,7 +506,7 @@ namespace FILO
             if (done)
             {
                 SetVisibilityRecieveTabControl(true);
-                TbControl.IsEnabled = true;
+                SetEnabled(SendItem, true);
             }
         }
     }
