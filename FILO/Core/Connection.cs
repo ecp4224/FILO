@@ -29,7 +29,7 @@ namespace FILO.Core
     public class Connection
     {
         private const int DefaultPort = 1351;
-        private const int DefaultBuffer = 1024; //TODO Maybe change..
+        private const int DefaultBuffer = 131072; //TODO Maybe change..
         private const int DefaultTimeout = 300000;
         private static readonly string PortCheckerUrl = "http://ping.eu/action.php?atype=5"; //TODO Create custom php script at hypereddie.com
         private String _ip;
@@ -146,20 +146,22 @@ namespace FILO.Core
                 throw new InvalidOperationException("Error getting filename for file \"" + filePath + "\"");
             byte[] bytes = new byte[filename.Length * sizeof(char)];
             System.Buffer.BlockCopy(filename.ToCharArray(), 0, bytes, 0, bytes.Length);
-            _socket.Send(BitConverter.GetBytes(bytes.Length));
-            _socket.Send(bytes);
+            _socket.Send(BitConverter.GetBytes(bytes.Length)); //Send filename length
+            _socket.Send(bytes); //Send filename
             using (var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, System.IO.FileShare.None))
             {
                 var t = new Thread(new ThreadStart(_sendBufferedBytes));
-                t.Start();
                 _pos = 0;
                 _posLength = fs.Length;
+                _socket.Send(BitConverter.GetBytes(_posLength)); //Send file length
+                t.Start();
                 while (_pos < _posLength)
                 {
                     if (!_sending)
                         break;
-                    var dataBuffer = new byte[Buffer];
-                    var count = fs.Read(dataBuffer, 0, Buffer);
+                    int size = Math.Min(Buffer, (int)(_posLength - _pos));
+                    var dataBuffer = new byte[size];
+                    var count = fs.Read(dataBuffer, 0, size);
                     _pos += count;
                     if (count == 0)
                         break;
@@ -171,7 +173,7 @@ namespace FILO.Core
                 t.Join();
             }
 
-            _socket.Send(new byte[] {255, 255, 255, 255}, 0, 4, SocketFlags.None); //Terminate command
+            //_socket.Send(new byte[] {255, 255, 255, 255}, 0, 4, SocketFlags.None); //Terminate command
             Progress = 200;
             _listenSocket.Close();
             _listenSocket.Dispose();
@@ -201,7 +203,11 @@ namespace FILO.Core
             {
                 while (true)
                 {
-                    var data = new byte[hasFile ? Buffer : prepare ? 4 : 1];
+                    int bsize = 0;
+                    if (hasFile)
+                        bsize = Math.Min(Buffer, (int)(_posLength - _pos));
+                    else bsize = prepare ? 4 : 1;
+                    var data = new byte[bsize];
                     int count = _socket.Receive(data, 0, data.Length, SocketFlags.None);
                     if (count == 0)
                         continue;
@@ -211,23 +217,37 @@ namespace FILO.Core
                             data[5] == 0 && count == 4)
                             break;
                         _data.Enqueue(data);
+                        _bufferLength++;
+                        _pos += count;
+                        if (_pos >= _posLength)
+                            break;
+                        Progress = (int)(((double)((double)_bufferCount / (double)_bufferLength) * 100.0) + ((double)((double)_pos / (double)_posLength) * 100.0));
                     }
                     else
                     {
                         if (prepare && count > 0)
                         {
-                            int size = BitConverter.ToInt32(data, 0);
+                            int size = BitConverter.ToInt32(data, 0); //Convert bytes to filename length
                             while (true)
                             {
                                 data = new byte[size];
-                                count = _socket.Receive(data, 0, size, SocketFlags.None);
+                                count = _socket.Receive(data, 0, size, SocketFlags.None); //Recieve filename
                                 if (count == 0)
                                     continue;
                                 break;
                             }
                             char[] chars = new char[data.Length / sizeof(char)];
                             System.Buffer.BlockCopy(data, 0, chars, 0, data.Length);
-                            fileName = new string(chars);
+                            fileName = new string(chars); //Convert bytes to filename
+                            while (true)
+                            {
+                                data = new byte[sizeof (long)];
+                                count = _socket.Receive(data, 0, sizeof (long), SocketFlags.None);
+                                if (count == 0)
+                                    continue;
+                                break;
+                            }
+                            _posLength = BitConverter.ToInt64(data, 0); //Convert bytes to long
                             hasFile = true;
                             thread = new Thread(() => _saveBufferedBytes(savePath + "\\" + fileName));
                             thread.Start();
@@ -239,6 +259,7 @@ namespace FILO.Core
                 }
                 _recieving = false;
                 thread.Join();
+                Progress = 200;
             }
             catch (IOException e)
             {
@@ -310,7 +331,7 @@ namespace FILO.Core
                         {
                             byte[] buffer;
                             _data.TryDequeue(out buffer);
-                            _socket.Send(buffer, 0, Buffer, SocketFlags.None);
+                            _socket.Send(buffer, 0, buffer.Length, SocketFlags.None);
                         }
                         break;
                     }
@@ -318,7 +339,7 @@ namespace FILO.Core
                     {
                         byte[] buffer;
                         _data.TryDequeue(out buffer);
-                        _socket.Send(buffer, 0, Buffer, SocketFlags.None);
+                        _socket.Send(buffer, 0, buffer.Length, SocketFlags.None);
                     }
                     Thread.Sleep(10);
                 }

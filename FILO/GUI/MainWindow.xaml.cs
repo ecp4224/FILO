@@ -106,7 +106,7 @@ namespace FILO
         private object dummyNode = null;
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            ProgressBar.Visibility = Visibility.Hidden;
+            RecieveProgressBar.Visibility = Visibility.Hidden;
             StatusLabel.Visibility = Visibility.Hidden;
             CancelButton.Visibility = Visibility.Hidden;
             SendProgressBar.Visibility = Visibility.Hidden;
@@ -344,7 +344,7 @@ namespace FILO
             SetVisible(IdTextBox, value);
 
 
-            SetVisible(ProgressBar, !value);
+            SetVisible(RecieveProgressBar, !value);
             SetVisible(StatusLabel, !value);
             SetVisible(CancelButton, !value);
         }
@@ -362,6 +362,7 @@ namespace FILO
             RecieveButton.IsEnabled = false;
             RecieveButton.Content = "Preparing";
             CancelButton.IsEnabled = true;
+            RecieveProgressBar.Maximum = 200;
             string ip;
             string id = IdTextBox.Text;
             IdTextBox.IsEnabled = false;
@@ -461,6 +462,7 @@ namespace FILO
             SetEnabled(RecieveButton, true);
             timer = new Timer(delegate
             {
+                ChangeProgressBar(RecieveProgressBar, connection.Progress);
                 SetLabelContent(StatusLabel, Logger.LastMessage);
             }, null, 0, 20);
 
@@ -468,6 +470,7 @@ namespace FILO
 
             Logger.Info("Done!");
             ChangeButtonContent(CancelButton, "Finish");
+            SetLabelContent(StatusLabel, "Done!");
             SetEnabled(CancelButton, true);
             SetEnabled(RecieveButton, true);
             done = true;

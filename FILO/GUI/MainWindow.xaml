@@ -78,9 +78,7 @@
                             </Style>
                         </Button.Resources>
                     </Button>
-                    <TreeView x:Name="FoldersItem" SelectedItemChanged="foldersItem_SelectedItemChanged" Width="Auto" Background="#FFFFFFFF" BorderBrush="#eff4ff" Foreground="#FFFFFFFF" Margin="21,19,26,77"
-			        VirtualizingPanel.IsVirtualizing="True"
-			        VirtualizingPanel.VirtualizationMode="Recycling">
+                    <TreeView x:Name="FoldersItem" SelectedItemChanged="foldersItem_SelectedItemChanged" Width="Auto" Background="#FFFFFFFF" BorderBrush="#eff4ff" Foreground="#FFFFFFFF" Margin="21,19,26,77">
 
                         <TreeView.Resources>
                             <Style TargetType="{x:Type TreeViewItem}">
@@ -250,7 +248,7 @@
                         </Button.Resources>
                     </Button>
                     <TextBox Name="IdTextBox" TextWrapping="Wrap" Text="TextBox" Margin="153,145,153,241" FontSize="44" TextChanged="TextBox_TextChanged" HorizontalContentAlignment="Center" GotKeyboardFocus="IdTextBox_OnGotKeyboardFocus"/>
-                    <ProgressBar Name="ProgressBar" Margin="28,166,32,241"/>
+                    <ProgressBar Name="RecieveProgressBar" Margin="28,166,32,241"/>
                     <Label Name="StatusLabel" Content="Waiting for user.." HorizontalAlignment="Left" Margin="28,115,0,0" VerticalAlignment="Top" FontFamily="../Fonts/Oxygen/#Oxygen" FontSize="23" Width="762" HorizontalContentAlignment="Center"/>
                 </Grid>
             </TabItem>
